@@ -5,7 +5,27 @@ import os
 # --- 这里是你的配置区 ---
 RSS_URLS = [
     'https://rsshub.app/twitter/user/animate_cafe', 
-    'https://rsshub.app/twitter/user/animateinfo'
+    'https://rsshub.app/twitter/user/animateinfo', 
+    'https://rsshub.app/twitter/user/oshinoko_love', 
+    'https://rsshub.app/twitter/user/animejujutsuten',
+    'https://rsshub.app/twitter/user/AMNIBUS',
+    'https://rsshub.app/twitter/user/Jumpcs_Shueisha',
+    'https://rsshub.app/twitter/user/es_acrossstage',
+    'https://rsshub.app/twitter/user/jujutsu_goods',
+     'https://rsshub.app/twitter/user/animateinfo',
+    'https://rsshub.app/twitter/user/eeo_store',
+    'https://rsshub.app/twitter/user/toman_goods',
+    'https://rsshub.app/twitter/user/kujibikido',
+    'https://rsshub.app/twitter/user/medicos_et_02',
+    'https://rsshub.app/twitter/user/anime_eupho',
+    'https://rsshub.app/twitter/user/princesscafe333',
+    'https://rsshub.app/twitter/user/kimetsu_off',
+    'https://rsshub.app/twitter/user/kimetsugoods',
+    'https://rsshub.app/twitter/user/animehaikyu_com',
+    'https://rsshub.app/twitter/user/NatsumeYujincho',
+    'https://rsshub.app/twitter/user/kuroshitsuji_pr',
+    'https://rsshub.app/twitter/user/naruto_check',
+    'https://rsshub.app/twitter/user/OPcom_info',
 ]
 KEYWORDS = ["受注", "再販", "予約", "限定", "缶バッジ"] 
 # -----------------------
