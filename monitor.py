@@ -4,33 +4,19 @@ import os
 from datetime import datetime, timedelta, timezone
 
 # --- 这里是你的配置区 ---
-# 批量更换为 .moeyu.org 镜像站，通常比 .app 更稳
-RSS_URLS = [
-    'https://rsshub.moeyu.org/twitter/user/animate_cafe', 
-    'https://rsshub.moeyu.org/twitter/user/animateinfo', 
-    'https://rsshub.moeyu.org/twitter/user/oshinoko_love', 
-    'https://rsshub.moeyu.org/twitter/user/animejujutsuten',
-    'https://rsshub.moeyu.org/twitter/user/AMNIBUS',
-    'https://rsshub.moeyu.org/twitter/user/Jumpcs_Shueisha',
-    'https://rsshub.moeyu.org/twitter/user/es_acrossstage',
-    'https://rsshub.moeyu.org/twitter/user/jujutsu_goods',
-    'https://rsshub.moeyu.org/twitter/user/eeo_store',
-    'https://rsshub.moeyu.org/twitter/user/toman_goods',
-    'https://rsshub.moeyu.org/twitter/user/kujibikido',
-    'https://rsshub.moeyu.org/twitter/user/medicos_et_02',
-    'https://rsshub.moeyu.org/twitter/user/anime_eupho',
-    'https://rsshub.moeyu.org/twitter/user/princesscafe333',
-    'https://rsshub.moeyu.org/twitter/user/kimetsu_off',
-    'https://rsshub.moeyu.org/twitter/user/kimetsugoods',
-    'https://rsshub.moeyu.org/twitter/user/animehaikyu_com',
-    'https://rsshub.moeyu.org/twitter/user/NatsumeYujincho',
-    'https://rsshub.moeyu.org/twitter/user/kuroshitsuji_pr',
-    'https://rsshub.moeyu.org/twitter/user/naruto_check',
-    'https://rsshub.moeyu.org/twitter/user/OPcom_info'
+# 改用目前更稳定的镜像节点
+BASE_URL = 'https://rss.bloonix.org/?type=twitter&user='
+
+ACCOUNTS = [
+    'oshinoko_love', 'animate_cafe', 'animateinfo', 'animejujutsuten',
+    'AMNIBUS', 'Jumpcs_Shueisha', 'es_acrossstage', 'jujutsu_goods',
+    'eeo_store', 'toman_goods', 'kujibikido', 'medicos_et_02',
+    'anime_eupho', 'princesscafe333', 'kimetsu_off', 'kimetsugoods',
+    'animehaikyu_com', 'NatsumeYujincho', 'kuroshitsuji_pr', 'naruto_check', 'OPcom_info'
 ]
 
-# 临时放宽关键词和时间进行【暴力测试】
-KEYWORDS = ["受注", "再販", "予約", "限定", "缶バッジ", "。"] # 加了个句号，基本必中
+# 暴力测试关键词：加了句号和空格，确保一定能抓到东西来验证通道
+KEYWORDS = ["受注", "再販", "予約", "限定", "缶バッジ", "。", " "] 
 # -----------------------
 
 def send_discord_msg(content):
@@ -39,38 +25,50 @@ def send_discord_msg(content):
     data = {"username": "谷子情报官", "content": content}
     try:
         requests.post(webhook_url, json=data, timeout=10)
-    except Exception as e:
-        print(f"推送 Discord 失败: {e}")
+    except:
+        pass
 
 def check_updates():
     now = datetime.now(timezone.utc)
-    # 暂时设为 48 小时，确保能抓到内容验证功能
-    time_threshold = now - timedelta(hours=48)
+    time_threshold = now - timedelta(hours=48) # 检查过去48小时
 
-    for url in RSS_URLS:
+    print(f"--- 巡逻开始 ---")
+
+    for user in ACCOUNTS:
+        url = f"{BASE_URL}{user}"
         try:
-            print(f"正在尝试抓取: {url}")
-            response = requests.get(url, timeout=15, headers={'User-Agent': 'Mozilla/5.0'})
+            print(f"正在检查账号: @{user}")
+            # 模拟浏览器访问
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+            response = requests.get(url, headers=headers, timeout=20)
             
             if response.status_code != 200:
-                print(f"❌ 链接失效 (状态码: {response.status_code}): {url}")
+                print(f"❌ 账号 @{user} 访问失败，错误码: {response.status_code}")
                 continue
                 
             feed = feedparser.parse(response.content)
+            
             if not feed.entries:
-                print(f"⚠️ 抓取成功但该账号暂时没发帖: {url}")
+                print(f"⚠️ 账号 @{user} 抓取成功但没内容（推特可能封锁了该请求）")
                 continue
 
             for entry in feed.entries:
-                published_time = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+                # 尝试解析多种时间格式
+                pub_parsed = entry.get('published_parsed') or entry.get('updated_parsed')
+                if not pub_parsed: continue
+                
+                published_time = datetime(*pub_parsed[:6], tzinfo=timezone.utc)
+
                 if published_time > time_threshold:
-                    if any(word in entry.title for word in KEYWORDS):
-                        msg = f"🔔 **发现新情报！**\n\n**内容：** {entry.title}\n**时间：** {published_time.strftime('%Y-%m-%d %H:%M:%S')}\n**链接：** {entry.link}"
+                    # 只要匹配到任何一个词
+                    if any(word.lower() in entry.title.lower() for word in KEYWORDS):
+                        print(f"✅ 发现符合条件的帖：{entry.title[:20]}...")
+                        msg = f"🔔 **新情报：@{user}**\n\n**内容：** {entry.title}\n**链接：** {entry.link}"
                         send_discord_msg(msg)
                 else:
                     break
         except Exception as e:
-            print(f"访问 {url} 彻底挂了: {e}")
+            print(f"🔥 检查 @{user} 时发生崩溃: {e}")
 
 if __name__ == "__main__":
     check_updates()
